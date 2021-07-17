@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "ES2019"],
+    "types": ["@types/chrome", "@types/react", "@types/react-dom"],
+    "noImplicitAny": true,
+    "target": "es2019",
+    "moduleResolution": "node",
+    "sourceMap": false,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "outDir": "build"
+  },
+  "exclude": ["./node_modules", "./build"]
+}
