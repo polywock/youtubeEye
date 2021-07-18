@@ -1,5 +1,7 @@
 # Youtube Eye 
 
+## Currently being published to the Chrome, Firefox, and Edge stores. 
+
 ### Find a Youtube channel's most popular videos from the past week, month, year, or within any date range. 
 
 Time range options available 
