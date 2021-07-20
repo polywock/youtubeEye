@@ -25,7 +25,7 @@
         --input-bg: #111;
         --input-border: #555;
     
-        --button-bg: #111;
+        --button-bg: #222;
         --button-border: #444;
 
         --red-bg: #450909;
@@ -52,9 +52,6 @@
         width: 1114px;
     }
 
-    & > *:not(.videos, .header) {
-        max-width: 600px;
-    }
 
     & > .header {
         font-size: 30px;
@@ -70,6 +67,7 @@
 
     & > .fields {
         margin-top: 20px;
+        max-width: 600px;
 
 
         & > .field {
@@ -135,6 +133,11 @@
         & > .VideoRender {
             width: 256px;
             cursor: pointer;
+
+            &:link, &:visited {
+                color: var(--text-color);
+                text-decoration: none;
+            }
             
             & > .thumb-wrapper {
                 position: relative;
@@ -191,12 +194,14 @@
     & > .loadMore {
         display: grid;
         justify-content: center;
+        margin-top: 20px;
+        font-size: 1.1em;
     }
 
     & > p {
         font-size: 1.4em;
     }
-}   
+}
 
 .Modal {
     background-color: #00000095;
@@ -212,6 +217,11 @@
 }
 
 
+input, select, button, a {
+    &:focus {
+        outline: 1px solid var(--highlight);
+    }
+}
 
 input[type="text"], input[type="password"], select, button {
     font-family: inherit;

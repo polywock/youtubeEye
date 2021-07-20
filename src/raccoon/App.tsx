@@ -192,7 +192,7 @@ export const App = (props: {config: Config, dark: boolean, channelId: string}) =
         )}
         {!!result?.nextPageToken && (
             <div className="loadMore">
-                <button onClick={handleLoadMore}>load more</button>
+                <button onClick={handleLoadMore}>LOAD MORE</button>
             </div>    
         )}
     </div>
@@ -200,11 +200,7 @@ export const App = (props: {config: Config, dark: boolean, channelId: string}) =
 
 const VideoRender = (props: {info: VideoInfo}) => {
     const { info } = props
-    const openVideo = () => {
-        window.open(`https://www.youtube.com/watch?v=${encodeURI(info.videoId)}`, "_blank")
-    }
-
-    return <div className="VideoRender" onClick={openVideo} onMouseUp={openVideo}>
+    return <a target="_blank" href={`https://www.youtube.com/watch?v=${encodeURI(info.videoId)}`} className="VideoRender">
         <div className="thumb-wrapper">
             <img draggable={false} src={`https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`}/>
             {info.likeRatio != null && (
@@ -218,6 +214,6 @@ const VideoRender = (props: {info: VideoInfo}) => {
             <div title={info.title} className="title">{info.title}</div>
             <div className="detail">{`${formatViews(info.viewCount)} • ${info.publishedAt ? (new Date(info.publishedAt).toDateString().split(" ").slice(1).join(" ")) : "--"}`}</div>
         </div>
-    </div>
+    </a>
 }
 
