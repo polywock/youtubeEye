@@ -1,6 +1,6 @@
 # Youtube Eye 
 
-## Install the [Chrome](https://chrome.google.com/webstore/detail/youtube-eye-find-popular/jbeakaahnhfmchihleconjmaghpljjoa), [Firefox](https://addons.mozilla.org/firefox/addon/youtube-eye-find-popular), or Edge (soon) version.
+## Install the [Chrome](https://chrome.google.com/webstore/detail/youtube-eye-find-popular/jbeakaahnhfmchihleconjmaghpljjoa), [Firefox](https://addons.mozilla.org/firefox/addon/youtube-eye-find-popular), or [Edge](https://microsoftedge.microsoft.com/addons/detail/youtube-eye-find-popular/kldghbiokejcjpfggknncbghhpgmcepd) version.
 
 ### Find a Youtube channel's most popular videos from the past week, month, year, or within any date range. 
 
