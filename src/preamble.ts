@@ -1,12 +1,18 @@
-
-let button: HTMLDivElement
+let popularButton: HTMLDivElement
+let commentButton: HTMLDivElement
+let addedButtonStyle = false 
 
 function main() {
     window.addEventListener("keydown", handleKey, {capture: true})
     window.addEventListener("keyup", handleKey, {capture: true})
     window.addEventListener("keypress", handleKey, {capture: true})
 
-    window.addEventListener("yt-navigate-finish", () => setTimeout(handleNavigate, 300), true)
+    window.addEventListener("yt-navigate-finish", () => setTimeout(handleNavigate, 500), true)
+    window.addEventListener("yt-action", (e: CustomEvent) => {
+        if (["yt-service-request", "yt-reload-continuation-items-command", "yt-store-grafted-ve-action"].includes(e.detail?.actionName)) {
+            setTimeout(handleNavigate, 500)
+        }
+    }, true)
 
     document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", () => handleNavigate(), {capture: true, once: true}) : handleNavigate()
 }
@@ -17,40 +23,66 @@ function handleKey(e: KeyboardEvent) {
     }
 }
 
-function ensureButton() {
-    if (button) return 
-    button = document.createElement("div")
-    button.id = "raccoon"
-    button.innerText = "Find popular"
-
+function createButton(forComments?: boolean) {
+    const button = document.createElement("div")
+    button.classList.add("raccoon")
     button.style.backgroundColor = "var(--yt-spec-badge-chip-background)"
     button.style.color = "var(--yt-spec-text-secondary)"
-    button.style.fontSize = "inherit"
-    button.style.fontWeight = "bolder"
-    button.style.marginLeft = "10px"
-    button.style.padding = "0 5px"
+    button.style.fontSize = forComments ? "16px" : "inherit"
+    button.style.padding = forComments ? "5px" : "0 5px"
     button.style.userSelect = "none"
-    
-    const style = document.createElement("style")
-    style.textContent = `div#raccoon:hover {cursor: pointer; background-color: blue !important; color: white !important}`
-    document.head.appendChild(style)
+    button.style.fontWeight = "bolder"
+    button.style.borderRadius = "5px"
 
-    button.addEventListener("click", e => {
+    if (!addedButtonStyle) {
+        addedButtonStyle = true 
+        const style = document.createElement("style")
+        style.textContent = `div.raccoon:hover {cursor: pointer; background-color: blue !important; color: white !important}`
+        document.head.appendChild(style)
+    }
+
+    return button 
+}
+
+function ensureButtons() {
+    if (popularButton) return 
+
+    // popular 
+    popularButton = createButton()
+    popularButton.innerText = "Find popular"
+    popularButton.style.marginLeft = "10px"
+
+    popularButton.addEventListener("click", e => {
+        window.raccoonComments = false
+        chrome.runtime.sendMessage({type: "TRIGGER"})
+    })
+
+    // comments 
+    commentButton = createButton(true)
+    commentButton.innerText = "Search"
+    commentButton.style.marginLeft = "15px"
+    
+    commentButton.addEventListener("click", e => {
+        window.raccoonComments = true 
         chrome.runtime.sendMessage({type: "TRIGGER"})
     })
 }
 
-function handleNavigate(repeat = 5) {
-    console.log("REPEAT")
-    const base = document.querySelector("ytd-video-owner-renderer.ytd-video-secondary-info-renderer ytd-channel-name")
+function handleNavigate() {
+    ensureButtons()
+    tryIntegrate(popularButton, "ytd-video-owner-renderer.ytd-video-secondary-info-renderer ytd-channel-name", 5)
+    tryIntegrate(commentButton, "ytd-comments-header-renderer > div#title.ytd-comments-header-renderer", 5)
+}
+
+function tryIntegrate(element: HTMLDivElement, selector: string, repeat: number) {
+    const base = document.querySelector(selector)
     if (base) {
-        ensureButton()
-        base.appendChild(button)
+        base.appendChild(element)
     } else {
-        button?.remove()
+        element?.remove()
         if (repeat >= 1) {
             setTimeout(() => {
-                handleNavigate(repeat - 1)
+                tryIntegrate(element, selector, repeat - 1)
             }, 500)
         }
     }

@@ -1,5 +1,5 @@
 import debounce from "lodash.debounce";
-import { Config, VideoInfo, YearMonth } from "./types";
+import { CommentInfo, Config, VideoInfo, YearMonth } from "./types";
 
 export function getDefaultConfig(): Config {
     const now = new Date() 
@@ -18,25 +18,83 @@ export const persistConfig = debounce((config: Config) => {
 }, 3000, {trailing: true, leading: true})
 
 
-export function isInteger(text: string) {
-    return /^\d+$/.test(text?.trim())
-}
-
 export function apiKeyLooksValid(key: string) {
     return key?.length === 39
+}
+
+function assertApiKey(apiKey: string) {
+    if (!apiKey) {
+        throw Error("API key required")
+    }
+    if (!apiKeyLooksValid(apiKey)) {
+        throw Error("invalid API key")
+    }
 }
 
 function pad(text: string | number, length = 2) {
     return text.toString().padStart(length, "0")
 }
 
+let isFirefoxResult: boolean
+function isFirefox() {
+  isFirefoxResult = isFirefoxResult ?? navigator.userAgent.includes("Firefox/")
+  return isFirefoxResult
+}
+
+const ISO8601_REGEX = /PT(\d+(?=H))?H?(\d+(?=M))?M?(\d+(?=S))?S??/
+function parseISO8601(text: string) {
+    const match = ISO8601_REGEX.exec(text || "")
+    if (!match) return null
+    if (match[1]) {
+        return `${match[1]}:${pad(match[2] || "00")}:${pad(match[3] || "00")}`
+    } else if (match[2]) {
+        return `${match[2] || "0"}:${pad(match[3] || "00")}`
+    } else if (match[3]) {
+        return `0:${pad(match[3])}`
+    }
+}
+
+const ALLOWED_TAGS = ["A", "BR", "HR", "B", "I", "DEL"]
+let sanitizeDummy: HTMLDivElement
+
+function getRedirectLink(dirty: string) {
+    const r = new URL("https://www.youtube.com/redirect")
+    r.searchParams.set("q", dirty)
+    return r.toString()
+}
+
+function sanitizeAttributes(elem: Element) {
+    const hrefAttribute = elem.attributes.getNamedItem("href");
+    [...elem.attributes].forEach(v => elem.attributes.removeNamedItem(v.name))
+    if (elem.tagName === "A" && hrefAttribute) {
+        if (hrefAttribute.value.toUpperCase().includes("JAVASCRIPT")) return 
+        if (!hrefAttribute.value.toUpperCase().trimStart().startsWith("HTTP")) return 
+        hrefAttribute.value = getRedirectLink(hrefAttribute.value)
+        elem.attributes.setNamedItem(hrefAttribute)
+    }
+}
+
+// Youtube's Data v3 API likely returns safe HTML data, but just in case do some light sanitization. 
+function sanitize(dirty: string) {
+    sanitizeDummy = sanitizeDummy ?? document.createElement("div")
+    sanitizeDummy.innerHTML = ""
+    try {
+        sanitizeDummy.innerHTML = dirty || ""
+        sanitizeDummy.querySelectorAll("*").forEach(v => {
+            if (!ALLOWED_TAGS.includes(v.tagName.toUpperCase())) {
+                v.remove() 
+                return 
+            }
+            sanitizeAttributes(v)
+        })
+        return sanitizeDummy.innerHTML
+    } catch (err) {}
+
+    return "" 
+}
+
 export function generateSearchUrl(channelId: string, config: Config, pageToken?: string) {
-    if (!config.apiKey) {
-        throw Error("API key required")
-    }
-    if (!apiKeyLooksValid(config.apiKey)) {
-        throw Error("invalid API key")
-    }
+    assertApiKey(config.apiKey)
     const now = new Date()
     let publishedAfter = new Date("2010-01-01").toISOString()
     let publishedBefore = now.toISOString()
@@ -101,32 +159,66 @@ export function generateVideosUrl(apiKey: string, ids: string[]) {
     return url.toString()
 }
 
-export type FetchVideosResult = {videos: VideoInfo[], nextPageToken?: string}
-
-export async function fetchVideosAware(channelId: string, config: Config, pageToken?: string): Promise<FetchVideosResult> {
-    if (isFirefox()) return requestFetchVideos(channelId, config, pageToken)
-    return fetchVideos(channelId, config, pageToken)
-}
-
-
-export async function requestFetchVideos(channelId: string, config: Config, pageToken?: string): Promise<FetchVideosResult> {
-    return new Promise((res, rej) => {
-        chrome.runtime.sendMessage({type: "FETCH_VIDEOS", channelId, config, pageToken}, resp => {
-            if (resp?.error) {
-                rej(resp.error)
-                return 
-            }
-            res(resp)
-        })
+export function generateThreadsURL(channelOrVideoId: string, config: Config, pageToken?: string) {
+    assertApiKey(config.apiKey)
+    
+    const url = new URL(`https://www.googleapis.com/youtube/v3/commentThreads`)
+    const search = new URLSearchParams({
+        key: config.apiKey,
+        maxResults: "100",
+        order: "time",
+        textFormat: "html",
+        part: "snippet"
     })
+    search.set(config.forAllChannel ? "allThreadsRelatedToChannelId" : "videoId", channelOrVideoId)
+
+    if (config.searchTerms) {
+        if (config.matchMode === "EXACT") {
+            search.set("searchTerms", (config.searchTerms ?? "").replace(/["']/g, ""))
+        } else if (config.matchMode === "ANY")  {
+            search.set("searchTerms", (config.searchTerms ?? "").replace(/\s+/, ",").split(",").map(v => v.trim()).filter(v => v).join("|"))
+        } else {
+            search.set("searchTerms", (config.searchTerms ?? "").replace(/\s+/, ",").split(",").map(v => v.trim()).filter(v => v).join(","))
+        }
+    }
+    
+    if (pageToken) {
+        search.set("pageToken", pageToken)
+    }
+    url.search = search.toString()
+    return url.toString()
 }
+
+export function generateCommentsURL(parentId: string, apiKey: string, pageToken?: string) {
+    assertApiKey(apiKey)
+    
+    const url = new URL(`https://www.googleapis.com/youtube/v3/comments`)
+    const search = new URLSearchParams({
+        key: apiKey,
+        maxResults: "10",
+        order: "time",
+        textFormat: "html",
+        parentId,
+        part: "snippet"
+    })
+    
+    if (pageToken) {
+        search.set("pageToken", pageToken)
+    }
+    url.search = search.toString()
+    return url.toString()
+}
+
+
+export type FetchVideosResult = {type: "VIDEOS", items: VideoInfo[], nextPageToken?: string}
+
 
 export async function fetchVideos(channelId: string, config: Config, pageToken?: string): Promise<FetchVideosResult> {
     let url = generateSearchUrl(channelId, config, pageToken)
-    const {items, nextPageToken} = await fetchYoutubeItems(url)
-    if (items.length === 0) return {videos: []}
+    const {items, nextPageToken} = await fetchItemsAware(url)
+    if (items.length === 0) return {type: "VIDEOS", items: []}
     url = generateVideosUrl(config.apiKey, items.map(item => item?.id?.videoId).filter(v => v))
-    const {items: infos} = await fetchYoutubeItems(url)
+    const {items: infos} = await fetchItemsAware(url)
     const videos = infos.map(item => {
         try {
             const likeCount = parseInt(item.statistics.likeCount)
@@ -146,11 +238,91 @@ export async function fetchVideos(channelId: string, config: Config, pageToken?:
         }
     }).filter(v => v)
     videos.sort((a, b) => b.viewCount - a.viewCount)
-    return {videos, nextPageToken}
+    return {type: "VIDEOS", items: videos, nextPageToken}
 }
 
 
-export async function fetchYoutubeItems(url: string): Promise<{items: any[], nextPageToken?: string}> {
+export type fetchCommentResults = {type: "COMMENTS", items: CommentInfo[], nextPageToken?: string}
+
+export async function fetchThreads(videoOrChannelId: string, config: Config, pageToken?: string): Promise<fetchCommentResults> {
+    let url = generateThreadsURL(videoOrChannelId, config, pageToken)
+    const {items, nextPageToken} = await fetchItemsAware(url)
+    if (items.length === 0) return {type: "COMMENTS", items: []}
+    const comments = items.map(item => {
+        try {
+            const snippet =  item.snippet.topLevelComment.snippet
+            return {
+                commentId: item.snippet.topLevelComment.id,
+                videoId: item.snippet.videoId,
+                replyCount: item.snippet.totalReplyCount,
+                text: snippet.textDisplay?.length > 400 ? sanitize(snippet.textDisplay?.trim() ?? "").substr(0, 400).concat("...") : sanitize(snippet.textDisplay?.trim() ?? ""),
+                author: snippet.authorDisplayName,
+                authorId:  snippet.authorChannelId?.value,
+                authorImageUrl: snippet.authorProfileImageUrl,
+                publishedAt: snippet.publishedAt,
+                updatedAt: snippet.updatedAt,
+                likeCount: snippet.likeCount,
+                replies: []
+            } as CommentInfo
+        } catch (err) {
+            return null 
+        }
+    }).filter(v => v)
+
+    comments.sort((a, b) => b.likeCount - a.likeCount)
+
+    return {type: "COMMENTS", items: comments, nextPageToken}
+}
+
+export async function fetchComments(videoId: string, parentId: string, apiKey: string, pageToken?: string): Promise<fetchCommentResults> {
+    let url = generateCommentsURL(parentId, apiKey, pageToken)
+    const {items, nextPageToken} = await fetchItemsAware(url)
+    if (items.length === 0) return {type: "COMMENTS", items: []}
+    const comments = items.map(item => {
+        try {
+            const snippet =  item.snippet
+            return {
+                commentId: item.id,
+                videoId,
+                text: snippet.textDisplay?.length > 400 ? sanitize(snippet.textDisplay?.trim() ?? "").substr(0, 400).concat("...") : sanitize(snippet.textDisplay?.trim() ?? ""),
+                author: snippet.authorDisplayName,
+                authorId:  snippet.authorChannelId?.value,
+                authorImageUrl: snippet.authorProfileImageUrl,
+                publishedAt: snippet.publishedAt,
+                updatedAt: snippet.updatedAt,
+                likeCount: snippet.likeCount,
+                replies: []
+            } as CommentInfo
+        } catch (err) {
+            return null 
+        }
+    }).filter(v => v)
+
+    return {type: "COMMENTS", items: comments, nextPageToken}
+}
+
+//#region FetchItems 
+type FetchItemsResponse = {items: any[], nextPageToken?: string}
+
+export async function fetchItemsAware(url: string): Promise<FetchItemsResponse> {
+    if (isFirefox()) return requestFetchItems(url)
+    return fetchItems(url)
+}
+
+
+export async function requestFetchItems(url: string): Promise<FetchItemsResponse> {
+    return new Promise((res, rej) => {
+        chrome.runtime.sendMessage({type: "FETCH_ITEMS", url}, resp => {
+            if (resp?.error) {
+                rej(resp.error)
+                return 
+            }
+            res(resp)
+        })
+    })
+}
+
+export async function fetchItems(url: string): Promise<FetchItemsResponse> {
     const now = new Date()
     let resp: Response
     try {
@@ -183,50 +355,3 @@ export async function fetchYoutubeItems(url: string): Promise<{items: any[], nex
     return {items, nextPageToken: json.nextPageToken} 
 }
 
-function lerp(lb: number, rb: number, scalar: number) {
-    return lb + (rb - lb) * scalar
-}
-
-
-export function getRatingColor(rating: number) {
-    rating = Math.max(0, rating - 0.6) * (1 / 0.4)
-    const good = [150, 255, 150]
-    const bad = [255, 180, 180]
-    return `rgb(${lerp(bad[0], good[0], rating).toFixed(0)}, ${lerp(bad[1], good[1], rating).toFixed(0)}, ${lerp(bad[2], good[2], rating).toFixed(0)})`
-}
-
-    function selectiveToFixed(x: number) {
-        if (x >= 10) return x.toFixed(0) 
-        return x.toFixed(1) 
-    }
-
-    export function formatViews(views: number) {
-        if (views >= 1E9) {
-            return `${selectiveToFixed(views / 1E9)}B views`
-        } else if (views >= 1E6) {
-            return `${selectiveToFixed(views / 1E6)}M views`
-        } else if (views >= 1E3) {
-            return `${selectiveToFixed(views / 1E3)}K views`
-        } else {
-            return `${Math.floor(views)} views`
-        }
-    }
-
-let isFirefoxResult: boolean
-function isFirefox() {
-  isFirefoxResult = isFirefoxResult ?? navigator.userAgent.includes("Firefox/")
-  return isFirefoxResult
-}
-
-const ISO8601_REGEX = /PT(\d+(?=H))?H?(\d+(?=M))?M?(\d+(?=S))?S??/
-function parseISO8601(text: string) {
-    const match = ISO8601_REGEX.exec(text || "")
-    if (!match) return null
-    if (match[1]) {
-        return `${match[1]}:${pad(match[2] || "00")}:${pad(match[3] || "00")}`
-    } else if (match[2]) {
-        return `${match[2] || "0"}:${pad(match[3] || "00")}`
-    } else if (match[3]) {
-        return `0:${pad(match[3])}`
-    }
-}

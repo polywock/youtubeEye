@@ -1,59 +1,65 @@
 import produce from "immer"
-import { useEffect, useRef, useState } from "react"
-import { Config, RangeType, VideoDuration, VideoInfo, YearMonth } from "./types"
-import { fetchVideosAware, FetchVideosResult, formatViews, getDefaultConfig, getRatingColor, isInteger, persistConfig } from "./utils"
-const currentYear = new Date().getFullYear()
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+import { useState } from "react"
+import { RenderComment } from "./comps/RenderComment"
+import { FieldsPopular } from "./comps/FieldsPopular"
+import { FieldsComments } from "./comps/FieldsComments"
+import { RenderVideo } from "./comps/RenderVideo"
+import { Config, VideoInfo } from "./types"
+import { fetchThreads, fetchCommentResults, fetchVideos, FetchVideosResult, getDefaultConfig, persistConfig } from "./utils"
 
-export const App = (props: {config: Config, dark: boolean, channelId: string}) => {
+type AppProps = {
+    forComments: boolean, 
+    videoId: string, 
+    config: Config, 
+    dark: boolean, 
+    channelId: string
+}
+
+export const App = (props: AppProps) => {
     const [config, setConfig] = useState(props.config)
     const [blur, setBlur] = useState(!!props.config?.apiKey)
-    const [fromError, setFromError] = useState(false)
-    const [toError, setToError] = useState(false)
-    const [result, setResult] = useState(null as FetchVideosResult)
+    const [result, setResult] = useState(null as FetchVideosResult | fetchCommentResults)
+    const [loading, setLoading] = useState(false)
 
-    const apiRef = useRef<HTMLInputElement>()
-    const queryRef = useRef<HTMLInputElement>()
-    const fromRef = useRef<HTMLInputElement>()
-    const toRef = useRef<HTMLInputElement>()
-
-    const rangeYear = (config.rangeType as YearMonth)?.year
-    
     const updateConfig = (config: Config, reset = false) => {
         setConfig(config) 
         persistConfig(config)
         if (reset) {
-            if (apiRef.current) apiRef.current.value = config.apiKey ?? ""
-            if (queryRef.current) queryRef.current.value = config.query ?? ""
             setResult(null)
         }
     }
 
     const handleFind = () => {
-        fetchVideosAware(props.channelId, config).then(res => {
+        setLoading(true);
+
+        (props.forComments ? (
+            fetchThreads(config.forAllChannel ? props.channelId : props.videoId, config)
+        ) : (
+            fetchVideos(props.channelId, config)
+        )).then(res => {
             setResult(res)
         }, err => {
             alert(err)
             setResult(null)
-        })
+        }).finally(() => setLoading(false))
     }
 
     const handleLoadMore = () => {
-        fetchVideosAware(props.channelId, config, result.nextPageToken).then(res => {
+        setLoading(true);
+
+        (props.forComments ? (
+            fetchThreads(config.forAllChannel ? props.channelId : props.videoId, config, result.nextPageToken)
+        ) : (
+            fetchVideos(props.channelId, config, result.nextPageToken)
+        )).then(res => {
             setResult(produce(result, d => {
-                d.videos = [...d.videos, ...res.videos]
                 d.nextPageToken = res.nextPageToken
+                d.items = [...(d.items as VideoInfo[]), ...(res.items as VideoInfo[])]
             }))
         }, err => {
             alert(err)
-        })
+        }).finally(() => setLoading(false))
     }
-
-    useEffect(() => {
-        if (!config.apiKey) {
-            apiRef.current?.focus()
-        }
-    }, [])
 
     return <div id="App" className={props.dark ? "dark" : ""}>
         <a target="_blank" href="https://github.com/polywock/youtubeEye" className="header">
@@ -67,107 +73,14 @@ export const App = (props: {config: Config, dark: boolean, channelId: string}) =
         <div className="fields">
             <div className="field">
                 <div>API key</div>
-                <input ref={apiRef} required onFocus={e => setBlur(false)} defaultValue={config.apiKey ?? ""} type={blur ? "password" : "text"} placeholder="Youtube Data API key required" onChange={e => {
+                <input {...(config.apiKey ? {} : {autoFocus: true})} required onFocus={e => setBlur(false)} value={config.apiKey ?? ""} type={blur ? "password" : "text"} placeholder="Youtube Data API key required" onChange={e => {
                     updateConfig(produce(config, d => {
                         d.apiKey = e.target.value
                     }))
                 }}/>
             </div>
-            <div className={`field ${rangeYear ? "year" : ""}`}>
-                <div>Range</div>
-                <select value={rangeYear ?? (config.rangeType as string)} onChange={e => {
-                    updateConfig(produce(config, d => {
-                        if (isInteger(e.target.value)) {
-                            d.rangeType = {year: e.target.value}
-                        } else {
-                            d.rangeType = e.target.value as RangeType
-                        }
-                    }))
-                }}>
-                    <option value={"CUSTOM"}>Custom range</option>
-                    <option value={"PAST_WEEK"}>Past week</option>
-                    <option value={"PAST_14"}>Past 2 weeks</option>
-                    <option value={"PAST_MONTH"}>Past month</option>
-                    <option value={"PAST_60"}>Past 2 months</option>
-                    <option value={"PAST_90"}>Past 3 months</option>
-                    <option value={"PAST_180"}>Past 6 months</option>
-                    <option value={"PAST_YEAR"}>Past year</option>
-                    <optgroup label="Year">
-                        {Array(11).fill(0).map((v, i) => (currentYear - i).toFixed(0).toString()).map(v => (
-                            <option value={v}>{v}</option>
-                        ))}
-                    </optgroup>
-                </select>
-                {rangeYear && (
-                    <select value={(config.rangeType as YearMonth)?.month ?? 0} onChange={e => {
-                        updateConfig(produce(config, d => {
-                            d.rangeType = {year: rangeYear, month: e.target.value}
-                        }))
-                    }}>
-                        <option value={"0"}>Any month</option>
-                        {MONTHS.map((v, i) => (
-                            <option key={i} value={(i + 1).toFixed(0)}>{v}</option>
-                        ))}
-                    </select>
-                )}
-            </div>
-            {config.rangeType !== "CUSTOM" ? null : <>
-                <div className="field">
-                    <div>From</div>
-                    <input onBlur={() => {
-                        setFromError(false)
-                        fromRef.current.value = config.from
-                    }} ref={fromRef} className={fromError ? "error" : ""} defaultValue={config.from ?? ""} type={"text"} onChange={e => {
-                        if (isNaN(new Date(e.target.value).getTime())) {
-                            setFromError(true)
-                            return
-                        } 
-                        setFromError(false)
-                        updateConfig(produce(config, d => {
-                            d.from = e.target.value
-                        }))
-                    }}/>
-                </div>
-                <div className="field">
-                    <div>To</div>
-                    <input onBlur={() => {
-                        setToError(false)
-                        toRef.current.value = config.to
-                    }} ref={toRef} className={toError ? "error" : ""} defaultValue={config.to ?? ""} type={"text"} onChange={e => {
-                        if (isNaN(new Date(e.target.value).getTime())) {
-                            setToError(true)
-                            return
-                        } 
-                        setToError(false)
-                        updateConfig(produce(config, d => {
-                            d.to = e.target.value
-                        }))
-                    }}/>
-                </div>
-            </>}
-            <div className="field">
-                <div>Query</div>
-                <input ref={queryRef} defaultValue={config.query ?? ""} type="text" placeholder="Optional keywords" onChange={e => {
-                    updateConfig(produce(config, d => {
-                        d.query = e.target.value
-                    }))
-                }}/>
-            </div>
-            <div className="field">
-                <div>Duration</div>
-                <select value={config.duration} onChange={e => {
-                    updateConfig(produce(config, d => {
-                        d.duration = e.target.value as VideoDuration
-                    }))
-                }}>
-                    <option value={"ANY"}>Any</option>
-                    <option value={"SHORT"}>Under 4 minutes</option>
-                    <option value={"MEDIUM"}>4 - 20 minutes</option>
-                    <option value={"LONG"}>Over 20 minutes</option>
-                </select>
-            </div>
+            {props.forComments ? <FieldsComments config={config} updateConfig={updateConfig}/> : <FieldsPopular config={config} updateConfig={updateConfig}/>}
         </div>
-
         <div className="tos">
             <input id="tos" type="checkbox" checked={!!config.agreed} onChange={e => {
                 updateConfig(produce(config, d => {
@@ -177,43 +90,39 @@ export const App = (props: {config: Config, dark: boolean, channelId: string}) =
             <label htmlFor="tos">I agree to the <a target="_blank" href="https://github.com/polywock/youtubeEye/blob/main/TERMS_OF_SERVICE.md">terms of service</a> and <a target="_blank" href="https://github.com/polywock/youtubeEye/blob/main/PRIVACY_POLICY.md">privacy policy</a>.</label>
         </div>
         <div className="controls">
-            <button disabled={!config.agreed} onClick={handleFind}>{"Find popular"}</button>
+            <button className={loading ? "invert" : ""} disabled={!config.agreed} onClick={handleFind}>{props.forComments ? "Search comments" : "Find popular"}</button>
             <button onClick={() => updateConfig({...getDefaultConfig(), apiKey: config.apiKey, agreed: config.agreed}, true)}>{"Reset"}</button>
         </div>
-        {result?.videos?.length === 0 && (
-            <p>No videos found</p>   
-        )}
-        {!!result?.videos?.length && (
-            <div className="videos">
-                {result.videos.map(info => (
-                    <VideoRender info={info}/>
-                ))}
-            </div>
-        )}
+        {result?.type === "VIDEOS" && <>
+            {result.items.length === 0 && (
+                <p>{`No videos found`}</p>   
+            )}
+            {!!result.items.length && (
+                <div className="videos">
+                    {result.items.map(info => (
+                        <RenderVideo key={info.videoId} info={info}/>
+                    ))}
+                </div>
+            )}    
+        </>}
+        {result?.type === "COMMENTS" && <>
+            <p>{`${result.items.length ? `${result.items.length}${result.nextPageToken ? "+" : ""}` : "no"} comments`}</p>
+            {!!result.items.length && (
+                <div className="comments">
+                    {result.items.map(info => (
+                        <RenderComment key={info.commentId} apiKey={config.apiKey || ""} info={info}/>
+                    ))}
+                </div>
+            )}    
+        </>}
         {!!result?.nextPageToken && (
             <div className="loadMore">
-                <button onClick={handleLoadMore}>LOAD MORE</button>
+                <button className={loading ? "invert" : ""} onClick={handleLoadMore}>LOAD MORE</button>
             </div>    
         )}
     </div>
 }
 
-const VideoRender = (props: {info: VideoInfo}) => {
-    const { info } = props
-    return <a target="_blank" href={`https://www.youtube.com/watch?v=${encodeURI(info.videoId)}`} className="VideoRender">
-        <div className="thumb-wrapper">
-            <img draggable={false} src={`https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`}/>
-            {info.likeRatio != null && (
-                <div style={{color: getRatingColor(info.likeRatio)}} className="rating">{`${Math.round(info.likeRatio * 100)}%`}</div>
-            )}
-            {info.duration != null && (
-                <div className="duration">{info.duration}</div>
-            )}
-        </div>
-        <div className="meta">
-            <div title={info.title} className="title">{info.title}</div>
-            <div className="detail">{`${formatViews(info.viewCount)} • ${info.publishedAt ? (new Date(info.publishedAt).toDateString().split(" ").slice(1).join(" ")) : "--"}`}</div>
-        </div>
-    </a>
-}
+
+
 

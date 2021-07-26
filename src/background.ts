@@ -1,4 +1,4 @@
-import { fetchVideos } from "./raccoon/utils"
+import { fetchItems } from "./raccoon/utils"
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     if (msg.type === "TRIGGER") {
@@ -13,8 +13,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
             })
         }
         reply(true)
-    } else if (msg.type === "FETCH_VIDEOS") {
-        fetchVideos(msg.channelId, msg.config, msg.pageToken).then(result => {
+    } else if (msg.type === "FETCH_ITEMS") {
+        fetchItems(msg.url).then(result => {
             reply(result)
         }, error => {
             reply({error})

@@ -1,7 +1,8 @@
 
 declare global {
     interface Window {
-        raccoonBlockKeys: boolean
+        raccoonBlockKeys: boolean,
+        raccoonComments: boolean
     }    
 }
 
@@ -19,7 +20,11 @@ export type Config = {
     from: string,
     to: string,
     query?: string,
-    sortBy?: "VIEW_COUNT" | "RELEVANCE" | "RATING"
+    sortBy?: "VIEW_COUNT" | "RELEVANCE" | "RATING",
+    matchMode?: "ANY"| "ALL" | "EXACT"
+    searchTerms?: string,
+    forAllChannel?: boolean
+
 }
 
 export type VideoInfo = {
@@ -29,4 +34,19 @@ export type VideoInfo = {
     viewCount: number,
     likeRatio: number,
     duration: string 
+}
+
+export type CommentInfo = {
+    commentId: string,
+    videoId?: string,
+    replyCount?: number,
+    text: string,
+    author: string,
+    authorId?: string,
+    authorImageUrl?: string,
+    publishedAt: string,
+    updatedAt: string,
+    likeCount: number,
+    replies: CommentInfo[],
+    lastLoaded?: boolean
 }

@@ -115,11 +115,17 @@
         }
     }
 
+
     & > .videos {
         display: grid;
         grid-template-columns: repeat(2, max-content);
         row-gap: 20px;
         column-gap: 10px;
+
+        a:link, a:visited {
+            color: var(--text-color);
+            text-decoration: none;
+        }
         
 
         @media only screen and (min-width: 1020px) {
@@ -130,14 +136,9 @@
             grid-template-columns: repeat(4, max-content);
         }
 
-        & > .VideoRender {
+        & > .RenderVideo {
             width: 256px;
             cursor: pointer;
-
-            &:link, &:visited {
-                color: var(--text-color);
-                text-decoration: none;
-            }
             
             & > .thumb-wrapper {
                 position: relative;
@@ -191,6 +192,66 @@
         }
     }
 
+
+    & > .comments {
+
+        a:link, a:visited {
+            color: var(--highlight);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+       
+        @media only screen and (min-width: 1020px) {
+            grid-template-columns: repeat(3, max-content);
+        }
+
+        @media only screen and (min-width: 1400px) {
+            grid-template-columns: repeat(4, max-content);
+        }
+
+        & .RenderComment {
+            width: 800px;
+            display: grid; 
+            grid-template-columns: max-content 1fr;
+            column-gap: 15px; 
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            align-items: start;
+
+            &.last:not(:last-child) {
+                padding-bottom: 10px;
+                border-bottom: 1px solid var(--text-color);
+            }
+
+            & > .inner {
+                margin-bottom: 10px;
+
+                & > .header {
+                    font-size: 0.9em;
+                    white-space: pre;
+
+                    & > .date {
+                        font-size: 0.8em;
+                        margin-left: 10px;
+                    }
+                }
+
+                & > .loadReplies {
+                    display: block;
+                    margin-top: 10px;
+                    font-size: 0.85em;
+                }
+
+                & > .replies {
+                    margin-top: 40px;
+                    margin-bottom: 30px;
+                }
+            }
+        }
+    }
+
     & > .loadMore {
         display: grid;
         justify-content: center;
@@ -200,6 +261,7 @@
 
     & > p {
         font-size: 1.4em;
+        margin-bottom: 20px;
     }
 }
 
@@ -216,6 +278,9 @@
     align-items: center;
 }
 
+.invert {
+    filter: invert(1);
+}
 
 input, select, button, a {
     &:focus {
