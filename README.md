@@ -2,12 +2,9 @@
 
 ## Install the [Chrome](https://chrome.google.com/webstore/detail/youtube-eye-find-popular/jbeakaahnhfmchihleconjmaghpljjoa), [Firefox](https://addons.mozilla.org/firefox/addon/youtube-eye-find-popular), or [Edge](https://microsoftedge.microsoft.com/addons/detail/youtube-eye-find-popular/kldghbiokejcjpfggknncbghhpgmcepd) version.
 
-### Find a Youtube channel's most popular videos from the past week, month, year, or within any date range. 
+1. Find a Youtube channel's most popular videos from the past month, year, or any date range. 
+2. Search Youtube comments. 
 
-Time range options available 
-1. Past week, month, year, etc.
-2. Specific year, e.g. 2020. 
-3. Custom date range. 
 
 ### Usage 
 1. The user must supply their own Youtube API key. Here's a [video walkthrough](https://www.youtube.com/watch?v=FpXkDHNyMrE) on how to create one.
@@ -16,8 +13,8 @@ Time range options available
 
 ### Screenshots 
 
-1. Once installed and Youtube tab is refreshed, a "Find popular" button should show up near the channel name. 
-<img src="https://github.com/polywock/youtubeEye/blob/main/screenshot1.jpg?raw=true" width="600">
+1. Once installed and your Youtube tab is refreshed, a "Find popular" button should show up near the channel name. A "Search" button will show up near the comment section.
+<img src="https://lh3.googleusercontent.com/jxy4a_J0KpVZt_0la8Jr2RBcmqC_eNGfx5G2KwHxT5EwhUJzSoKVfPcK1suPqOWUSwVNccPZsbCtpjrsHZBAvt1DqJA=w640-h400-e365-rj-sc0x00ffffffe" width="600">
 
 
 2. Clicking on it would open the search interface. 
