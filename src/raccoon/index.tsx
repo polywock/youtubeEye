@@ -3,13 +3,23 @@ import { App } from "./App"
 import styles from "./index.scss"
 import { Modal } from "./comps/Modal"
 import { Config } from "./types";
-import { getDefaultConfig, persistConfig } from "./utils";
+import { getDefaultConfig, persistConfig, getChannelId } from "./utils";
 
 const CHANNEL_URL_REGEX = /channel\/([A-Za-z0-9_-]{24})$/;
 
-function main(config: Config) {
-    const channelId = [...document.querySelectorAll(`ytd-video-owner-renderer.ytd-video-secondary-info-renderer ytd-channel-name yt-formatted-string.ytd-channel-name a`) as NodeListOf<HTMLAnchorElement>].map(v => CHANNEL_URL_REGEX.exec(v.href)?.[1]).filter(v => v)[0]
+async function main(config: Config) {
     const videoId = new URL(location.href).searchParams.get("v")
+    if (!videoId) {
+        return alert("Video ID not found!")
+    }
+    let channelId = [...document.querySelectorAll(`ytd-video-owner-renderer.ytd-video-secondary-info-renderer ytd-channel-name yt-formatted-string.ytd-channel-name a`) as NodeListOf<HTMLAnchorElement>].map(v => CHANNEL_URL_REGEX.exec(v.href)?.[1]).filter(v => v)[0]
+    if (!channelId) {
+        try {
+            channelId = await getChannelId(videoId, window.API_KEY)
+        } catch (err) {
+            return alert(err) 
+        }
+    }
 
     if (window.raccoonComments) {
         if (!channelId && !videoId) return alert("Channel ID or the video ID not found!")

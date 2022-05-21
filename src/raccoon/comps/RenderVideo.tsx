@@ -6,7 +6,7 @@ export const RenderVideo = (props: {info: VideoInfo}) => {
       <div className="thumb-wrapper">
           <img draggable={false} src={`https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`}/>
           {info.likeRatio != null && (
-              <div style={{color: getRatingColor(info.likeRatio)}} className="rating">{`${Math.round(info.likeRatio * 100)}%`}</div>
+              <div style={{color: getRatingColor(info.likeRatio * 10)}} className="rating">{`★ ${Math.round(info.likeRatio * 100)}%`}</div>
           )}
           {info.duration != null && (
               <div className="duration">{info.duration}</div>

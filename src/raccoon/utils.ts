@@ -113,6 +113,8 @@ export function generateSearchUrl(channelId: string, config: Config, pageToken?:
         publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24 * 180)).toISOString()
     } else if (config.rangeType === "PAST_YEAR") {
         publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24 * 365)).toISOString()
+    } else if (config.rangeType === "PAST_YEAR2") {
+        publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24 * 365 * 2)).toISOString()
     } else if (config.rangeType === "CUSTOM") {
         publishedBefore = new Date(config.to).toISOString()
         publishedAfter = new Date(config.from).toISOString()
@@ -221,10 +223,9 @@ export async function fetchVideos(channelId: string, config: Config, pageToken?:
     const {items: infos} = await fetchItemsAware(url)
     const videos = infos.map(item => {
         try {
+            const viewCount = parseInt(item.statistics.viewCount)
             const likeCount = parseInt(item.statistics.likeCount)
-            const dislikeCount = parseInt(item.statistics.dislikeCount)
-            const totalCount = likeCount + dislikeCount
-            const likeRatio = totalCount ? likeCount / totalCount : 0.5
+            const likeRatio = likeCount / viewCount
             return {
                 title: item.snippet.title,
                 videoId: item.id,
@@ -329,7 +330,7 @@ export async function fetchItems(url: string): Promise<FetchItemsResponse> {
         resp = await fetch(url)
     } catch (err) {
         console.log(err)
-        throw "EROR"
+        throw "Could not fetch items!"
     }
     let json; 
     let jsonError; 
@@ -355,3 +356,48 @@ export async function fetchItems(url: string): Promise<FetchItemsResponse> {
     return {items, nextPageToken: json.nextPageToken} 
 }
 
+export async function getChannelId(videoId: string, key: string) {
+    const url = `https://www.youtube.com/youtubei/v1/player?key=${key}&prettyPrint=false`
+    const init = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            context: {
+                client: {
+                     hl: "en",
+                     clientName: "WEB",
+                     clientVersion: "2.20210721.00.00"
+                }
+               },
+               videoId: videoId
+        })
+    }
+
+    let resp: Response
+
+    try {
+        resp = await fetch(url, init)
+    } catch (err) {
+        console.log(err)
+        throw "v1/player couldn't fetch"
+    }
+
+    if (resp.status !== 200) {
+        console.log(resp.statusText)
+        throw "v1/player status not 200"
+    }
+
+    let json; 
+    try {
+        json = await resp.json()
+    } catch (err) {
+        throw "v1/player could not parse as JSON"
+    }
+    const channelId = json?.videoDetails?.channelId 
+    if (!channelId) {
+        throw `v1/player didn't return channel ID`
+    }
+    return channelId
+}

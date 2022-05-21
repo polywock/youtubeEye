@@ -2,7 +2,19 @@ let popularButton: HTMLDivElement
 let commentButton: HTMLDivElement
 let addedButtonStyle = false 
 
+
 function main() {
+    window.addEventListener("EYE-I", e => {
+        const { key } = (e as CustomEvent).detail
+        window.API_KEY = key 
+        e.stopImmediatePropagation()
+    }, true)
+
+    const s = document.createElement("script")
+    s.src = chrome.runtime.getURL("main.js")
+    document.documentElement.appendChild(s)
+
+
     window.addEventListener("keydown", handleKey, {capture: true})
     window.addEventListener("keyup", handleKey, {capture: true})
     window.addEventListener("keypress", handleKey, {capture: true})
@@ -53,8 +65,13 @@ function ensureButtons() {
     popularButton.style.marginLeft = "10px"
 
     popularButton.addEventListener("click", e => {
-        window.raccoonComments = false
-        chrome.runtime.sendMessage({type: "TRIGGER"})
+        window.dispatchEvent(new CustomEvent("EYE-M"))
+        if (window.API_KEY) {
+            window.raccoonComments = false
+            chrome.runtime.sendMessage({type: "TRIGGER"})
+        } else {
+            alert("Channel ID not found!")
+        }
     })
 
     // comments 
@@ -70,7 +87,7 @@ function ensureButtons() {
 
 function handleNavigate() {
     ensureButtons()
-    tryIntegrate(popularButton, "ytd-video-owner-renderer.ytd-video-secondary-info-renderer ytd-channel-name", 5)
+    tryIntegrate(popularButton, "ytd-video-owner-renderer ytd-channel-name", 5)
     tryIntegrate(commentButton, "ytd-comments-header-renderer > div#title.ytd-comments-header-renderer", 5)
 }
 

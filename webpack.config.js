@@ -5,7 +5,8 @@ const common = {
   entry: {
     preamble: "./src/preamble.ts",
     raccoon: "./src/raccoon/index.tsx",
-    background: "./src/background.ts"
+    background: "./src/background.ts",
+    main: "./src/main.ts"
   },
   output: {
     path: resolve(__dirname, env.FIREFOX ? "buildFf" : "build", "unpacked")

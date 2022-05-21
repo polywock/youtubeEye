@@ -34,6 +34,7 @@ export function FieldsPopular(props: Props) {
               <option value={"PAST_90"}>Past 3 months</option>
               <option value={"PAST_180"}>Past 6 months</option>
               <option value={"PAST_YEAR"}>Past year</option>
+              <option value={"PAST_YEAR2"}>Past 2 years</option>
               <optgroup label="Year">
                   {Array(11).fill(0).map((v, i) => (currentYear - i).toFixed(0).toString()).map(v => (
                       <option value={v}>{v}</option>
