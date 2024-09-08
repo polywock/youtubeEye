@@ -99,7 +99,9 @@ export function generateSearchUrl(channelId: string, config: Config, pageToken?:
     let publishedAfter = new Date("2010-01-01").toISOString()
     let publishedBefore = now.toISOString()
 
-    if (config.rangeType === "PAST_WEEK") {
+    if (config.rangeType === "PAST_DAY") {
+        publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24)).toISOString()
+    } else if (config.rangeType === "PAST_WEEK") {
         publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24 * 7)).toISOString()
     } else if (config.rangeType === "PAST_14") {
         publishedAfter = new Date(now.getTime() - (1000 * 60 * 60 * 24 * 14)).toISOString()

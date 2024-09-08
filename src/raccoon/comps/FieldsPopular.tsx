@@ -27,6 +27,7 @@ export function FieldsPopular(props: Props) {
               }))
           }}>
               <option value={"CUSTOM"}>Custom range</option>
+              <option value={"PAST_DAY"}>Past day</option>
               <option value={"PAST_WEEK"}>Past week</option>
               <option value={"PAST_14"}>Past 2 weeks</option>
               <option value={"PAST_MONTH"}>Past month</option>

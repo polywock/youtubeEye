@@ -7,7 +7,7 @@ declare global {
 }
 
 export type YearMonth = {year: string, month?: string}
-export type RangeType = "PAST_WEEK" | "PAST_MONTH" | "PAST_14" | "PAST_60" | "PAST_90" | "PAST_180" | "PAST_YEAR" | "PAST_YEAR2" | "CUSTOM" | YearMonth
+export type RangeType = "PAST_DAY" | "PAST_WEEK" | "PAST_MONTH" | "PAST_14" | "PAST_60" | "PAST_90" | "PAST_180" | "PAST_YEAR" | "PAST_YEAR2" | "CUSTOM" | YearMonth
 
 export type VideoDuration = "ANY" | "SHORT" | "MEDIUM" | "LONG"
 
