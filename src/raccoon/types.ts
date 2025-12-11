@@ -15,13 +15,11 @@ export type Config = {
     version: number,
     apiKey?: string,
     rangeType: RangeType,
-    agreed?: boolean,
     duration: VideoDuration,
     from: string,
     to: string,
     query?: string,
     sortBy?: "VIEW_COUNT" | "RELEVANCE" | "RATING",
-    matchMode?: "ANY"| "ALL" | "EXACT"
     searchTerms?: string,
     forAllChannel?: boolean
 

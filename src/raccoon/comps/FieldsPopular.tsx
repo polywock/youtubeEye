@@ -1,4 +1,4 @@
-import produce from "immer"
+import { produce } from "immer"
 import { Config, RangeType, VideoDuration, YearMonth } from "../types"
 import { DateInput } from "./DateInput"
 
@@ -70,7 +70,7 @@ export function FieldsPopular(props: Props) {
           </div>
       </>}
       <div className="field">
-          <div>Query</div>
+          <div>Filter</div>
           <input value={config.query ?? ""} type="text" placeholder="Optional keywords" onChange={e => {
               updateConfig(produce(config, d => {
                   d.query = e.target.value

@@ -175,17 +175,7 @@ export function generateThreadsURL(channelOrVideoId: string, config: Config, pag
         part: "snippet"
     })
     search.set(config.forAllChannel ? "allThreadsRelatedToChannelId" : "videoId", channelOrVideoId)
-
-    if (config.searchTerms) {
-        if (config.matchMode === "EXACT") {
-            search.set("searchTerms", (config.searchTerms ?? "").replace(/["']/g, ""))
-        } else if (config.matchMode === "ANY")  {
-            search.set("searchTerms", (config.searchTerms ?? "").replace(/\s+/, ",").split(",").map(v => v.trim()).filter(v => v).join("|"))
-        } else {
-            search.set("searchTerms", (config.searchTerms ?? "").replace(/\s+/, ",").split(",").map(v => v.trim()).filter(v => v).join(","))
-        }
-    }
-    
+    if (config.searchTerms) search.set("searchTerms", config.searchTerms)
     if (pageToken) {
         search.set("pageToken", pageToken)
     }

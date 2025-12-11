@@ -1,14 +1,16 @@
-import ReactDOM from "react-dom"
+import { createRoot } from "react-dom/client"
 import { App } from "./App"
-import styles from "./index.scss"
+import styles from "./index.css"
 import { Modal } from "./comps/Modal"
 import { Config } from "./types";
 import { getDefaultConfig, persistConfig, getChannelId } from "./utils";
 
 const CHANNEL_URL_REGEX = /channel\/([A-Za-z0-9_-]{24})$/;
+const SHORTS_URL_VIDEO_ID = /\/shorts\/([A-Za-z0-9_-]{11})$/
 
 async function main(config: Config) {
-    const videoId = new URL(location.href).searchParams.get("v")
+    const url = new URL(location.href)
+    let videoId = url.searchParams.get("v") || SHORTS_URL_VIDEO_ID.exec(location.pathname)?.[1]
     if (!videoId) {
         return alert("Video ID not found!")
     }
@@ -46,17 +48,18 @@ async function main(config: Config) {
     shadow.appendChild(appStyles)
     document.body.appendChild(host)
 
-    ReactDOM.render(<Modal onExit={() => {
+    const root = createRoot(appRoot)
+    root.render(<Modal onExit={() => {
         persistConfig.flush()
-        ReactDOM.unmountComponentAtNode(appRoot)
+        root.unmount()
         host.remove()
         delete window.raccoonBlockKeys 
     }}>
         <App forComments={window.raccoonComments} channelId={channelId} videoId={videoId} config={config} dark={document.documentElement.hasAttribute("dark")}/>
-    </Modal>, appRoot)
+    </Modal>)
 }
 
 chrome.storage.local.get(["config"], ({config}) => {
-    main(config || getDefaultConfig())
+    main((config as Config) || getDefaultConfig())
 })
 

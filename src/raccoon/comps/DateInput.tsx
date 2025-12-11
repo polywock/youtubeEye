@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 
 export function DateInput(props: {value: string, onChange: (newValue: string) => void}) {
-  const ref = useRef<HTMLInputElement>()
+  const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
       if (ref.current) {

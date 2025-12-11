@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "ES2019"],
+    "lib": ["dom", "dom.iterable", "ESNext"],
     "types": ["@types/chrome", "@types/react", "@types/react-dom"],
     "noImplicitAny": true,
-    "target": "es2019",
+    "target": "es2022",
     "moduleResolution": "node",
     "sourceMap": false,
     "jsx": "react-jsx",

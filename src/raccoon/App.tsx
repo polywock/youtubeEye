@@ -1,4 +1,4 @@
-import produce from "immer"
+import { produce } from "immer"
 import { useState } from "react"
 import { RenderComment } from "./comps/RenderComment"
 import { FieldsPopular } from "./comps/FieldsPopular"
@@ -81,17 +81,9 @@ export const App = (props: AppProps) => {
             </div>
             {props.forComments ? <FieldsComments config={config} updateConfig={updateConfig}/> : <FieldsPopular config={config} updateConfig={updateConfig}/>}
         </div>
-        <div className="tos">
-            <input id="tos" type="checkbox" checked={!!config.agreed} onChange={e => {
-                updateConfig(produce(config, d => {
-                    d.agreed = !d.agreed
-                }))
-            }}/>
-            <label htmlFor="tos">I agree to the <a target="_blank" href="https://github.com/polywock/youtubeEye/blob/main/TERMS_OF_SERVICE.md">terms of service</a> and <a target="_blank" href="https://github.com/polywock/youtubeEye/blob/main/PRIVACY_POLICY.md">privacy policy</a>.</label>
-        </div>
         <div className="controls">
-            <button className={loading ? "invert" : ""} disabled={!config.agreed} onClick={handleFind}>{props.forComments ? "Search comments" : "Find popular"}</button>
-            <button onClick={() => updateConfig({...getDefaultConfig(), apiKey: config.apiKey, agreed: config.agreed}, true)}>{"Reset"}</button>
+            <button className={loading ? "invert" : ""} onClick={handleFind}>{props.forComments ? "Search comments" : "Find popular"}</button>
+            <button onClick={() => updateConfig({...getDefaultConfig(), apiKey: config.apiKey}, true)}>{"Reset"}</button>
         </div>
         {result?.type === "VIDEOS" && <>
             {result.items.length === 0 && (

@@ -69,7 +69,6 @@
         margin-top: 20px;
         max-width: 600px;
 
-
         & > .field {
             display: grid;
             grid-template-columns: 170px 1fr;
@@ -174,13 +173,9 @@
                 & > .title {
                     overflow: hidden !important;
                     text-overflow: ellipsis;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 2;
-                    -webkit-box-orient: vertical;
-
-                    display: -moz-box;
-                    -moz-line-clamp: 2;
-                    -moz-box-orient: vertical;
+                    box-orient: vertical;
+                    display: box;
+                    line-clamp: 2;
                 }
 
                 & > .detail {
@@ -341,4 +336,9 @@ select {
 
 svg {
     vertical-align: middle;
+}
+
+input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
 }
