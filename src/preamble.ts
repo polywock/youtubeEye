@@ -176,7 +176,7 @@ function addFilters() {
          let isNegative = false 
 
          if (!days) {
-            let amount = parseFloat(prompt(`Find videos from the past X ${MODE_TO_TEXT[mode]}? Use a negative number to exclude videos from the past X ${MODE_TO_TEXT[mode]}.`))
+            let amount = parseFloat(prompt(`Find videos from the past X ${MODE_TO_TEXT[mode]}? Use a negative number to exclude videos from the past X ${MODE_TO_TEXT[mode]}.`, "2"))
             if (!(amount > -99999)) return
             if (amount === 0) return 
             if (amount < 0) {

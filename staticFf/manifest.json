@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Youtube Eye: Find popular (month, year, etc)",
   "short_name": "Youtube Eye",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Find a Youtube channel's most popular videos from the past week, month, year, or within any date range.",
   "permissions": ["storage", "https://*.youtube.com/*"],
   "background": {
@@ -15,7 +15,7 @@
     "run_at": "document_start"
   }],
   "icons": {
-    "128": "./128.png"
+    "128": "128.png"
   },
   "web_accessible_resources": ["main.js"]
 }
