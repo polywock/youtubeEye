@@ -64,7 +64,7 @@ function ensureButtons() {
 
     // popular 
     popularButton = createButton()
-    popularButton.innerText = "Find popular"
+    popularButton.innerText = "Search"
     popularButton.style.marginLeft = "10px"
 
     popularButton.addEventListener("click", e => {

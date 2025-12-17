@@ -1,13 +1,20 @@
 {
-  "manifest_version": 2,
-  "name": "Youtube Eye: Find popular (month, year, etc)",
-  "short_name": "Youtube Eye",
-  "version": "0.0.9",
-  "description": "Find a Youtube channel's most popular videos from the past week, month, year, or within any date range.",
-  "permissions": ["storage", "https://*.youtube.com/*"],
+  "manifest_version": 3,
+  "name": "Search Youtube Comments and Channels",
+  "version": "0.1.0",
+   "browser_specific_settings": {
+    "gecko": {
+      "id": "{963b94ef-3371-41cb-bfa3-8845cd5c5d39}",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "description": "A simple extension to search through YouTube comments and channels",
+  "host_permissions": ["https://*.youtube.com/*"],
+  "permissions": ["storage", "scripting"],
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "scripts": ["background.js"]
   },
   "content_scripts": [{
     "matches": ["https://*.youtube.com/*"],
@@ -17,5 +24,8 @@
   "icons": {
     "128": "128.png"
   },
-  "web_accessible_resources": ["main.js"]
+  "web_accessible_resources": [{
+      "resources": ["main.js"],
+      "matches": ["https://*.youtube.com/*" ]
+  }]
 }
