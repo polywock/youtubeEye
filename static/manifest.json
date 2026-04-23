@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search Youtube Comments and Channels",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A simple extension to search through YouTube comments and channels",
   "host_permissions": ["https://*.youtube.com/*"],
   "permissions": ["storage", "scripting"],

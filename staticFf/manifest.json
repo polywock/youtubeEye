@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search Youtube Comments and Channels",
-  "version": "0.1.0",
+  "version": "0.1.1",
    "browser_specific_settings": {
     "gecko": {
       "id": "{963b94ef-3371-41cb-bfa3-8845cd5c5d39}",
